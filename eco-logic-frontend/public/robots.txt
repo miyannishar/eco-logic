@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /profile
+
+Sitemap: https://naksha.app/sitemap.xml 
