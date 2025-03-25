@@ -1,0 +1,30 @@
+{
+  "name": "naksha-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.8",
+    "@heroicons/react": "^2.1.5",
+    "@react-google-maps/api": "^2.20.3",
+    "@tailwindcss/forms": "^0.5.9",
+    "bcryptjs": "^2.4.3",
+    "framer-motion": "^11.11.11",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.8.0",
+    "next": "14.2.13",
+    "next-auth": "^4.24.10",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.14"
+  }
+}

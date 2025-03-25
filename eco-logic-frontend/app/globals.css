@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.camera-overlay {
+  @apply fixed inset-0 pointer-events-none;
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.5) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* Capture button animation */
+.capture-button {
+  @apply transition-transform duration-200;
+}
+
+.capture-button:active {
+  @apply scale-95;
+}
+
+/* Building card hover effect */
+.building-card {
+  @apply transition-transform duration-200 hover:scale-105;
+}
+
+/* Navigation icon pulse animation */
+.nav-icon-active {
+  @apply relative;
+}
+
+.nav-icon-active::after {
+  content: '';
+  @apply absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full;
+}
+
+input {
+  @apply w-[400px] border border-gray-200 py-2 px-6 bg-zinc-100/40;
+
+}
+
+.image-upload-container {
+  @apply relative border-2 border-dashed border-gray-300 rounded-lg p-6;
+}
+
+.image-upload-container:hover {
+  @apply border-blue-500;
+}
+
+.loading-spinner {
+  @apply animate-spin h-5 w-5 text-white;
+}
+
+.result-container {
+  @apply bg-white shadow-lg rounded-lg p-6 mt-8;
+}
+
+.selected-marker {
+  transform: scale(1.1);
+  border: 2px solid #3b82f6;
+  transition: all 0.2s ease-in-out;
+}
+
+.marker-academic {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.marker-administrative {
+  background-color: #ef4444;
+  color: white;
+}
+
+.marker-library {
+  background-color: #10b981;
+  color: white;
+}
+
+.map-info-window {
+  padding: 1rem;
+  max-width: 300px;
+}
+
+.map-info-window h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.map-info-window p {
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.map-info-window a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.directions-panel {
+  @apply bg-white rounded-lg shadow-lg p-4 mt-4;
+}
+
+.directions-step {
+  @apply py-2 border-b last:border-b-0;
+}
+
+.search-result {
+  @apply hover:bg-gray-100 cursor-pointer transition-colors duration-200;
+}
+
+.current-location-marker {
+  @apply bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg;
+
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+  }
+
+  .dark {
+    --background: #0f172a;
+    --foreground: #ffffff;
+  }
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  @apply w-full px-4 py-2.5 border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors rounded-lg;
+}
+
+input[type="checkbox"] {
+  @apply rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600;
+}
+
+/* Add these to your existing globals.css */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-fade-in-delay {
+  animation: fadeIn 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+/* Card hover effects */
+.hover\:scale-105:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
