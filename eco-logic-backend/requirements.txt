@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-dotenv
+google-generativeai
+Pillow
+tavily-python
+Jinja2
+python-multipart
+firebase-admin
+typing-extensions
+pydantic
+uuid
+fastapi-cors
