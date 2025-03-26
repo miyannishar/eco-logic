@@ -2,26 +2,25 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CloudArrowUpIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import { CloudArrowUpIcon, XMarkIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
 
 export default function UploadPage() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [prediction, setPrediction] = useState(null);
   const router = useRouter();
 
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file type
       if (!file.type.startsWith('image/')) {
         setError('Please select an image file');
         return;
       }
 
-      // Check file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setError('Image must be less than 5MB');
         return;
@@ -30,6 +29,7 @@ export default function UploadPage() {
       setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
       setError('');
+      setPrediction(null);
     }
   };
 
@@ -45,20 +45,26 @@ export default function UploadPage() {
 
     try {
       const formData = new FormData();
-      formData.append('image', selectedImage);
+      formData.append('file', selectedImage);
 
-      const response = await fetch('/api/analyze-building', {
+      console.log('Sending request to API...');
+
+      const response = await fetch('http://localhost:8000/predict', {
         method: 'POST',
         body: formData,
       });
 
+      console.log('Response received:', response.status);
+
       if (!response.ok) {
-        throw new Error('Failed to analyze image');
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`Failed to analyze image: ${errorData}`);
       }
 
       const data = await response.json();
-      // Store the analysis result ID in the URL for the results page
-      router.push(`/building-details?id=${data.resultId}`);
+      console.log('Prediction data:', data);
+      setPrediction(data.predicted_class);
     } catch (error) {
       console.error('Upload error:', error);
       setError('Failed to analyze image. Please try again.');
@@ -71,6 +77,11 @@ export default function UploadPage() {
     setSelectedImage(null);
     setPreviewUrl(null);
     setError('');
+    setPrediction(null);
+  };
+
+  const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
   };
 
   return (
@@ -78,11 +89,19 @@ export default function UploadPage() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-blue-600 
+              dark:hover:text-blue-400 transition-colors mb-8"
+          >
+            <ArrowLeftIcon className="h-5 w-5 mr-2" />
+            Back
+          </button>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Upload Building Image
+            Upload Food Image
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400">
-            Select an image of a campus building to identify
+            Upload an image of food to analyze its ingredients and nutrition
           </p>
         </div>
 
@@ -119,7 +138,7 @@ export default function UploadPage() {
                 </div>
               </div>
             ) : (
-              // Image Preview
+              // Image Preview and Result
               <div className="relative">
                 <button
                   type="button"
@@ -129,14 +148,25 @@ export default function UploadPage() {
                 >
                   <XMarkIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
                 </button>
-                <div className="relative h-64 w-full">
+                <div className="relative h-64 w-full mb-4">
                   <Image
                     src={previewUrl}
-                    alt="Selected building"
+                    alt="Selected food"
                     fill
                     className="rounded-lg object-cover"
                   />
                 </div>
+
+                {prediction && (
+                  <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                    <h3 className="text-lg font-semibold text-green-800 dark:text-green-300">
+                      Food Identified:
+                    </h3>
+                    <p className="text-green-700 dark:text-green-200 text-xl mt-2">
+                      {capitalizeFirstLetter(prediction)}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -147,14 +177,6 @@ export default function UploadPage() {
             )}
 
             <div className="mt-6 flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => router.push('/food-analysis')}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 
-                  hover:text-gray-500 dark:hover:text-gray-400"
-              >
-                Cancel
-              </button>
               <button
                 type="submit"
                 disabled={!selectedImage || isLoading}

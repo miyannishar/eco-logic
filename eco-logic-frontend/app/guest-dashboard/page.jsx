@@ -127,7 +127,7 @@ export default function GuestDashboard() {
             className="group relative bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden h-80"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Link href="/building-recognition" className="block p-8 h-full">
+            <Link href="/food-analysis" className="block p-8 h-full">
               <div className="flex items-center justify-between mb-6">
                 <MapIcon className="h-12 w-12 text-blue-500" />
                 <ArrowRightIcon className="h-6 w-6 text-gray-400 transform group-hover:translate-x-1 transition-transform" />
@@ -154,7 +154,7 @@ export default function GuestDashboard() {
             </div>
             
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Link href="/building-recognition" className="block p-8 h-full">
+            <Link href="/food-analysis" className="block p-8 h-full">
               <div className="flex items-center justify-between mb-6">
                 <CameraIcon className="h-12 w-12 text-green-500" />
                 <ArrowRightIcon className="h-6 w-6 text-gray-400 transform group-hover:translate-x-1 transition-transform" />
