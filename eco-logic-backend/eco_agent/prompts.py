@@ -32,7 +32,7 @@ RESPONSE:
 
 # PROS and CONS IN TERMS OF HEALTH
 
-health_analysis_template = Template("""
+health_suggestions = Template("""
 You are an Health Product Analyst, Refer to the product description and list out atleast 3 points each
 about the positives and negatives of the product related to health factors as seperate python lists of strings being points.
 You can also suggest few other alternatives to have a good health life. 
