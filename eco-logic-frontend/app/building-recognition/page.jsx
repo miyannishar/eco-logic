@@ -125,6 +125,24 @@ export default function BuildingRecognitionPage() {
 
       const data = await response.json();
       console.log('Response data:', data);
+      
+      // Parse JSON strings in the response
+      if (data["enviromental pros and cons"] && typeof data["enviromental pros and cons"] === 'string') {
+        try {
+          data["enviromental pros and cons"] = JSON.parse(data["enviromental pros and cons"]);
+        } catch (e) {
+          console.error("Error parsing environmental pros and cons:", e);
+        }
+      }
+      
+      if (data["health pros and cons"] && typeof data["health pros and cons"] === 'string') {
+        try {
+          data["health pros and cons"] = JSON.parse(data["health pros and cons"]);
+        } catch (e) {
+          console.error("Error parsing health pros and cons:", e);
+        }
+      }
+      
       setPrediction(data);
     } catch (error) {
       console.error('Upload error:', error);
@@ -277,7 +295,7 @@ export default function BuildingRecognitionPage() {
           
           setIsLoading(true);
           const response = await fetch(
-            `http://localhost:8000/eco-agent/product-details?userMedicalAilments=${userMedicalAilments}`,
+            `http://localhost:8000/eco-agent/product-details?userMedicalAilments=${selectedDisease}`,
             {
               method: 'POST',
               body: formData,
@@ -294,6 +312,24 @@ export default function BuildingRecognitionPage() {
           }
 
           const data = await response.json();
+          
+          // Parse JSON strings in the response for video recording as well
+          if (data["enviromental pros and cons"] && typeof data["enviromental pros and cons"] === 'string') {
+            try {
+              data["enviromental pros and cons"] = JSON.parse(data["enviromental pros and cons"]);
+            } catch (e) {
+              console.error("Error parsing environmental pros and cons:", e);
+            }
+          }
+          
+          if (data["health pros and cons"] && typeof data["health pros and cons"] === 'string') {
+            try {
+              data["health pros and cons"] = JSON.parse(data["health pros and cons"]);
+            } catch (e) {
+              console.error("Error parsing health pros and cons:", e);
+            }
+          }
+          
           setPrediction(data);
           setPreviewUrl(URL.createObjectURL(blob));
           setSelectedFile(videoFile);
@@ -398,8 +434,9 @@ export default function BuildingRecognitionPage() {
     };
   }, [showCamera, stream]);
 
-  // Add this helper function at the top of your file
+  // Update the getNutrientValue function to handle undefined values
   const getNutrientValue = (nutrientString) => {
+    if (!nutrientString) return 0;
     const value = nutrientString.match(/\d+/);
     return value ? parseInt(value[0]) : 0;
   };
@@ -672,7 +709,7 @@ export default function BuildingRecognitionPage() {
                                 Ingredients
                               </h3>
                               <ul className="list-disc list-inside text-gray-600 dark:text-gray-400">
-                                {prediction.ingridients_used.map((ingredient, index) => (
+                                {prediction.ingridients_used && prediction.ingridients_used.map((ingredient, index) => (
                                   <li key={index}>{ingredient}</li>
                                 ))}
                               </ul>
@@ -684,69 +721,78 @@ export default function BuildingRecognitionPage() {
                                 Nutritional Information
                               </h3>
                               <div className="mb-8">
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                                  Nutritional Information
-                                </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                  {/* Calories */}
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 dark:text-gray-400">Calories</span>
-                                      <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[1])}cal</span>
+                                  {/* Calories - with null check */}
+                                  {prediction.nutritional_information && prediction.nutritional_information.length > 1 && (
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600 dark:text-gray-400">Calories</span>
+                                        <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[1])}cal</span>
+                                      </div>
+                                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div 
+                                          className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                                          style={{ width: `${(getNutrientValue(prediction.nutritional_information[1]) / 2000) * 100}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-xs text-gray-500">% Daily Value based on 2000 cal diet</span>
                                     </div>
-                                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                      <div 
-                                        className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                                        style={{ width: `${(getNutrientValue(prediction.nutritional_information[1]) / 2000) * 100}%` }}
-                                      ></div>
-                                    </div>
-                                    <span className="text-xs text-gray-500">% Daily Value based on 2000 cal diet</span>
-                                  </div>
+                                  )}
 
-                                  {/* Carbohydrates */}
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 dark:text-gray-400">Carbohydrates</span>
-                                      <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[4])}g</span>
+                                  {/* Carbohydrates - with null check */}
+                                  {prediction.nutritional_information && prediction.nutritional_information.length > 4 && (
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600 dark:text-gray-400">Carbohydrates</span>
+                                        <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[4])}g</span>
+                                      </div>
+                                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div 
+                                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                          style={{ width: `${(getNutrientValue(prediction.nutritional_information[4]) / 300) * 100}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-xs text-gray-500">% Daily Value based on 300g recommendation</span>
                                     </div>
-                                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                      <div 
-                                        className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                                        style={{ width: `${(getNutrientValue(prediction.nutritional_information[4]) / 300) * 100}%` }}
-                                      ></div>
-                                    </div>
-                                    <span className="text-xs text-gray-500">% Daily Value based on 300g recommendation</span>
-                                  </div>
+                                  )}
 
-                                  {/* Sugars */}
-                                  <div className="space-y-2">
-                                    <div className="flex justify-between items-center">
-                                      <span className="text-gray-600 dark:text-gray-400">Sugars</span>
-                                      <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[5])}g</span>
+                                  {/* Sugars - with null check */}
+                                  {prediction.nutritional_information && prediction.nutritional_information.length > 5 && (
+                                    <div className="space-y-2">
+                                      <div className="flex justify-between items-center">
+                                        <span className="text-gray-600 dark:text-gray-400">Sugars</span>
+                                        <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[5])}g</span>
+                                      </div>
+                                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div 
+                                          className="h-full bg-red-500 rounded-full transition-all duration-500"
+                                          style={{ width: `${(getNutrientValue(prediction.nutritional_information[5]) / 50) * 100}%` }}
+                                        ></div>
+                                      </div>
+                                      <span className="text-xs text-gray-500">% Daily Value based on 50g recommendation</span>
                                     </div>
-                                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                      <div 
-                                        className="h-full bg-red-500 rounded-full transition-all duration-500"
-                                        style={{ width: `${(getNutrientValue(prediction.nutritional_information[5]) / 50) * 100}%` }}
-                                      ></div>
-                                    </div>
-                                    <span className="text-xs text-gray-500">% Daily Value based on 50g recommendation</span>
-                                  </div>
+                                  )}
 
-                                  {/* Other Nutrients Grid */}
+                                  {/* Other Nutrients Grid - with null checks */}
                                   <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                      <span className="text-sm text-gray-600 dark:text-gray-400">Protein</span>
-                                      <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[6])}g</p>
-                                    </div>
-                                    <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                      <span className="text-sm text-gray-600 dark:text-gray-400">Fat</span>
-                                      <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[2])}g</p>
-                                    </div>
-                                    <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                      <span className="text-sm text-gray-600 dark:text-gray-400">Sodium</span>
-                                      <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[3])}mg</p>
-                                    </div>
+                                    {prediction.nutritional_information && prediction.nutritional_information.length > 6 && (
+                                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Protein</span>
+                                        <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[6])}g</p>
+                                      </div>
+                                    )}
+                                    {prediction.nutritional_information && prediction.nutritional_information.length > 2 && (
+                                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Fat</span>
+                                        <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[2])}g</p>
+                                      </div>
+                                    )}
+                                    {prediction.nutritional_information && prediction.nutritional_information.length > 3 && (
+                                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                        <span className="text-sm text-gray-600 dark:text-gray-400">Sodium</span>
+                                        <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[3])}mg</p>
+                                      </div>
+                                    )}
                                     <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                       <span className="text-sm text-gray-600 dark:text-gray-400">Serving</span>
                                       <p className="font-semibold">355ml</p>
@@ -756,13 +802,17 @@ export default function BuildingRecognitionPage() {
                               </div>
 
                               {/* Allergens & Warnings */}
-                              {(prediction.allergen_information.length > 0 || prediction.cautions_and_warnings.length > 0) && (
+                              {(prediction.allergen_information && prediction.allergen_information.length > 0) || 
+                               (prediction.cautions_and_warnings && prediction.cautions_and_warnings.length > 0) ? (
                                 <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
                                   <h4 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
                                     Allergens & Warnings
                                   </h4>
                                   <ul className="space-y-2">
-                                    {[...prediction.allergen_information, ...prediction.cautions_and_warnings].map((warning, index) => (
+                                    {[
+                                      ...(prediction.allergen_information || []), 
+                                      ...(prediction.cautions_and_warnings || [])
+                                    ].map((warning, index) => (
                                       <li key={index} className="flex items-center text-yellow-700 dark:text-yellow-300">
                                         <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -772,7 +822,7 @@ export default function BuildingRecognitionPage() {
                                     ))}
                                   </ul>
                                 </div>
-                              )}
+                               ) : null}
                             </div>
                           </div>
 
@@ -784,12 +834,12 @@ export default function BuildingRecognitionPage() {
                                 Allergens & Warnings
                               </h3>
                               <div className="space-y-2">
-                                {prediction.allergen_information.map((allergen, index) => (
+                                {prediction.allergen_information && prediction.allergen_information.map((allergen, index) => (
                                   <div key={index} className="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 p-2 rounded">
                                     {allergen}
                                   </div>
                                 ))}
-                                {prediction.cautions_and_warnings.map((warning, index) => (
+                                {prediction.cautions_and_warnings && prediction.cautions_and_warnings.map((warning, index) => (
                                   <div key={index} className="bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 p-2 rounded">
                                     {warning}
                                   </div>
@@ -807,7 +857,9 @@ export default function BuildingRecognitionPage() {
                                 <div>
                                   <h4 className="text-green-600 dark:text-green-400 font-medium mb-2">Positives</h4>
                                   <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                                    {prediction["enviromental pros and cons"].positive_things_about_the_product.slice(0, 3).map((pro, index) => (
+                                    {prediction["enviromental pros and cons"] && 
+                                     prediction["enviromental pros and cons"].positive_things_about_the_product &&
+                                     prediction["enviromental pros and cons"].positive_things_about_the_product.slice(0, 3).map((pro, index) => (
                                       <li key={index}>{pro}</li>
                                     ))}
                                   </ul>
@@ -816,7 +868,9 @@ export default function BuildingRecognitionPage() {
                                 <div>
                                   <h4 className="text-red-600 dark:text-red-400 font-medium mb-2">Concerns</h4>
                                   <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                                    {prediction["enviromental pros and cons"].harmful_things_about_the_product.slice(0, 3).map((con, index) => (
+                                    {prediction["enviromental pros and cons"] && 
+                                     prediction["enviromental pros and cons"].harmful_things_about_the_product &&
+                                     prediction["enviromental pros and cons"].harmful_things_about_the_product.slice(0, 3).map((con, index) => (
                                       <li key={index}>{con}</li>
                                     ))}
                                   </ul>
@@ -834,7 +888,9 @@ export default function BuildingRecognitionPage() {
                                 <div>
                                   <h4 className="text-green-600 dark:text-green-400 font-medium mb-2">Benefits</h4>
                                   <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                                    {prediction["health pros and cons"].positive_things_about_the_product.map((pro, index) => (
+                                    {prediction["health pros and cons"] && 
+                                     prediction["health pros and cons"].positive_things_about_the_product &&
+                                     prediction["health pros and cons"].positive_things_about_the_product.map((pro, index) => (
                                       <li key={index}>{pro}</li>
                                     ))}
                                   </ul>
@@ -843,13 +899,47 @@ export default function BuildingRecognitionPage() {
                                 <div>
                                   <h4 className="text-red-600 dark:text-red-400 font-medium mb-2">Risks</h4>
                                   <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                                    {prediction["health pros and cons"].harmful_things_about_the_product.map((con, index) => (
+                                    {prediction["health pros and cons"] && 
+                                     prediction["health pros and cons"].harmful_things_about_the_product &&
+                                     prediction["health pros and cons"].harmful_things_about_the_product.map((con, index) => (
                                       <li key={index}>{con}</li>
                                     ))}
                                   </ul>
                                 </div>
                               </div>
                             </div>
+
+                            {/* Alternatives */}
+                            {prediction["health pros and cons"] && 
+                             prediction["health pros and cons"].alternatives_to_consider && 
+                             prediction["health pros and cons"].alternatives_to_consider.length > 0 && (
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                  Healthier Alternatives
+                                </h3>
+                                <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
+                                  {prediction["health pros and cons"].alternatives_to_consider.map((alternative, index) => (
+                                    <li key={index}>{alternative}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Environmental Alternatives */}
+                            {prediction["enviromental pros and cons"] && 
+                             prediction["enviromental pros and cons"].alternatives_to_consider && 
+                             prediction["enviromental pros and cons"].alternatives_to_consider.length > 0 && (
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                  Eco-Friendly Alternatives
+                                </h3>
+                                <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
+                                  {prediction["enviromental pros and cons"].alternatives_to_consider.map((alternative, index) => (
+                                    <li key={index}>{alternative}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </div>
                         </div>
 
