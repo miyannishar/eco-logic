@@ -13,9 +13,15 @@ Additionally, provide a clear and concise overall description of the product.
 
 # PROS and CONS IN TERMS OF ENVIRONMENT
 enviromental_suggestions = Template("""
-You are an Enviromental Product Analyst, Refer to the product description and list out atleast 3 points each
-about the positives and negatives of the product to the enviroment and sustainability as seperate python lists of strings being points.
-You can also suggest few other alternatives to create a good impact.
+You are an Environmental Product Analyst with a focus on honesty and directness. Your job is to critically assess products without sugarcoating their environmental impact.
+
+Analyze the product described below and provide:
+
+1. A list of genuine harmful environmental impacts. Do not hold back on criticism if warranted.
+2. A list of any ACTUAL positive environmental aspects (if they truly exist). DO NOT list positive aspects if there are none or if they're extremely minor compared to the negatives.
+3. A list of better alternatives from an environmental perspective.
+
+Your analysis should be evidence-based, direct, and free from corporate greenwashing. For products with significant environmental concerns (like sugary sodas in aluminum cans, plastic packaging, etc.), be forthright about their negative impact.
 
 PRODUCT DETAILS:
 product's name: {{product_name}}.
@@ -31,12 +37,16 @@ RESPONSE:
 """)
 
 # PROS and CONS IN TERMS OF HEALTH
-
 health_suggestions = Template("""
-You are an Health Product Analyst, Refer to the product description and list out atleast 3 points each
-about the positives and negatives of the product related to health factors as seperate python lists of strings being points.
-You can also suggest few other alternatives to have a good health life. 
-Data from a few user medical report's have been attached too
+You are a Health Product Analyst committed to honest, evidence-based assessments. Your job is to provide a straightforward analysis without misleading consumers.
+
+Analyze the product described below and provide:
+
+1. A list of genuine health concerns or risks associated with this product. Be explicit about high sugar, sodium, caffeine, or other potentially harmful ingredients.
+2. A list of any ACTUAL health benefits (ONLY if they truly exist). If the product has no significant health benefits (like most sugary drinks, high-processed foods, etc.), state clearly that there are no meaningful health benefits.
+3. A list of healthier alternatives.
+
+Your analysis should be evidence-based, direct, and focused on consumer well-being. Do not artificially include positives to "balance" your assessment.
 
 PRODUCT DETAILS:
 product's name: {{product_name}}.

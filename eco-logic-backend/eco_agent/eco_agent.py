@@ -6,7 +6,7 @@ import json
 
 from wrapper import getOutPutInFormat, tavilySearch, model_pro, model, typeDocInputNOutputFormat
 from .output_structure import EdibleDataExtraction, EnviromentalProsAndCons, HealthProsAndCons
-from .prompts import product_description_template, web_searching_template, enviromental_suggestions
+from .prompts import product_description_template, web_searching_template, enviromental_suggestions, health_suggestions
 from report_analysis_and_storage import firebase_helper
 
 router = APIRouter(
@@ -153,7 +153,7 @@ async def describeProducts(userMedicalAilments: str, file: UploadFile = File(...
             # Generate health analysis
             pros_and_cons_health = getOutPutInFormat(
                 model,
-                enviromental_suggestions.render(
+                health_suggestions.render(
                     product_name=product_details["product_name"],
                     product_description=product_details["product_description"],
                     ingridients_used=product_details["ingridients_used"],
