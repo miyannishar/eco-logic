@@ -8,6 +8,9 @@
  * @returns {Object} - Data with parsed JSON strings
  */
 export const parseResponseData = (data) => {
+  // Handle null or undefined data
+  if (!data) return {};
+  
   // Create a copy to avoid mutating the original data
   const parsedData = { ...data };
   
@@ -31,6 +34,12 @@ export const parseResponseData = (data) => {
       parsedData["enviromental pros and cons"] = JSON.parse(parsedData["enviromental pros and cons"]);
     } catch (e) {
       console.error("Error parsing environmental pros and cons:", e);
+      // Provide a fallback structure instead of leaving it as an invalid string
+      parsedData["enviromental pros and cons"] = {
+        positive_things_about_the_product: [],
+        harmful_things_about_the_product: [],
+        alternatives_to_consider: []
+      };
     }
   }
   
@@ -40,6 +49,12 @@ export const parseResponseData = (data) => {
       parsedData["health pros and cons"] = JSON.parse(parsedData["health pros and cons"]);
     } catch (e) {
       console.error("Error parsing health pros and cons:", e);
+      // Provide a fallback structure
+      parsedData["health pros and cons"] = {
+        positive_things_about_the_product: [],
+        harmful_things_about_the_product: [],
+        alternatives_to_consider: []
+      };
     }
   }
   
@@ -53,8 +68,37 @@ export const parseResponseData = (data) => {
  */
 export const getNutrientValue = (nutrientString) => {
   if (!nutrientString) return 0;
-  const value = nutrientString.match(/\d+/);
-  return value ? parseInt(value[0]) : 0;
+  
+  // First try to match numbers with decimal points
+  const decimalMatch = nutrientString.match(/\d+\.\d+/);
+  if (decimalMatch) return parseFloat(decimalMatch[0]);
+  
+  // Then try integers
+  const intMatch = nutrientString.match(/\d+/);
+  return intMatch ? parseInt(intMatch[0], 10) : 0;
+};
+
+/**
+ * Safely access nested object properties with a fallback value
+ * @param {Object} obj - The object to access
+ * @param {string} path - The path to the property (e.g., 'a.b.c')
+ * @param {*} fallback - The fallback value if property doesn't exist
+ * @returns {*} - The property value or fallback
+ */
+export const safeAccess = (obj, path, fallback = null) => {
+  if (!obj || !path) return fallback;
+  
+  const keys = path.split('.');
+  let result = obj;
+  
+  for (const key of keys) {
+    if (result === null || result === undefined || typeof result !== 'object') {
+      return fallback;
+    }
+    result = result[key];
+  }
+  
+  return result === undefined ? fallback : result;
 };
 
 /**
@@ -68,6 +112,17 @@ export const capitalizeFirstLetter = (string) => {
 };
 
 /**
+ * Truncates a string to a maximum length, adding ellipsis if needed
+ * @param {string} str - The string to truncate
+ * @param {number} maxLength - Maximum length before truncation
+ * @returns {string} - Truncated string
+ */
+export const truncateString = (str, maxLength = 100) => {
+  if (!str) return '';
+  return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+};
+
+/**
  * Medical conditions list for dropdown
  */
 export const diseases = [
@@ -78,4 +133,6 @@ export const diseases = [
   { id: 'lactose', name: 'Lactose Intolerance' },
   { id: 'peanut', name: 'Peanut Allergy' },
   { id: 'shellfish', name: 'Shellfish Allergy' },
+  { id: 'tree_nut', name: 'Tree Nut Allergy' },
+  { id: 'gluten', name: 'Gluten Sensitivity' },
 ]; 

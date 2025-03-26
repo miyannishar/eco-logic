@@ -1,24 +1,42 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
-import { getNutrientValue, capitalizeFirstLetter } from '../utils';
+import { getNutrientValue, capitalizeFirstLetter, safeAccess, truncateString } from '../utils';
 
 /**
  * Component for displaying product analysis results
+ * Memoized to prevent unnecessary re-renders
  */
-export default function ProductAnalysisResult({ 
+const ProductAnalysisResult = ({ 
   prediction, 
   previewUrl, 
   fileType 
-}) {
+}) => {
   const [showRawData, setShowRawData] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  if (!prediction) return null;
+  // Handle edge case where prediction is missing
+  if (!prediction) return (
+    <div className="p-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg text-center">
+      <p className="text-gray-600 dark:text-gray-300">No analysis data available</p>
+    </div>
+  );
 
-  // Default product name and description if not provided
-  const productName = prediction.product_name || "Analyzed Product";
-  const productDescription = prediction.product_description || "No description available";
+  // Memoize product info for performance
+  const { 
+    productName, 
+    productDescription,
+    environmentalData,
+    healthData
+  } = useMemo(() => {
+    return {
+      productName: prediction.product_name || "Analyzed Product",
+      productDescription: prediction.product_description || "No description available",
+      environmentalData: safeAccess(prediction, "enviromental pros and cons", {}),
+      healthData: safeAccess(prediction, "health pros and cons", {})
+    };
+  }, [prediction]);
 
   return (
     <div className="mt-4 space-y-6">
@@ -35,14 +53,24 @@ export default function ProductAnalysisResult({
                   src={previewUrl}
                   className="object-contain w-full h-full"
                   controls
+                  onError={() => setImageError(true)}
                 />
               ) : (
-                <Image
-                  src={previewUrl}
-                  alt="Analyzed image"
-                  fill
-                  className="object-contain"
-                />
+                <>
+                  {!imageError ? (
+                    <Image
+                      src={previewUrl}
+                      alt="Analyzed image"
+                      fill
+                      className="object-contain"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <p className="text-gray-500">Unable to display media</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -54,7 +82,7 @@ export default function ProductAnalysisResult({
             {productName}
           </h2>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            {productDescription}
+            {truncateString(productDescription, 200)}
           </p>
         </div>
 
@@ -75,7 +103,7 @@ export default function ProductAnalysisResult({
             )}
 
             {/* Ingredients - only show if available */}
-            {prediction.ingridients_used && prediction.ingridients_used.length > 0 && (
+            {safeAccess(prediction, 'ingridients_used', []).length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   Ingredients
@@ -89,97 +117,18 @@ export default function ProductAnalysisResult({
             )}
 
             {/* Nutritional Information - only show if available */}
-            {prediction.nutritional_information && prediction.nutritional_information.length > 0 && (
+            {safeAccess(prediction, 'nutritional_information', []).length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                   Nutritional Information
                 </h3>
-                <div className="mb-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Calories - with null check */}
-                    {prediction.nutritional_information && prediction.nutritional_information.length > 1 && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">Calories</span>
-                          <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[1])}cal</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-orange-500 rounded-full transition-all duration-500"
-                            style={{ width: `${(getNutrientValue(prediction.nutritional_information[1]) / 2000) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500">% Daily Value based on 2000 cal diet</span>
-                      </div>
-                    )}
-
-                    {/* Carbohydrates - with null check */}
-                    {prediction.nutritional_information && prediction.nutritional_information.length > 4 && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">Carbohydrates</span>
-                          <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[4])}g</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-500 rounded-full transition-all duration-500"
-                            style={{ width: `${(getNutrientValue(prediction.nutritional_information[4]) / 300) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500">% Daily Value based on 300g recommendation</span>
-                      </div>
-                    )}
-
-                    {/* Sugars - with null check */}
-                    {prediction.nutritional_information && prediction.nutritional_information.length > 5 && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600 dark:text-gray-400">Sugars</span>
-                          <span className="font-semibold">{getNutrientValue(prediction.nutritional_information[5])}g</span>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-red-500 rounded-full transition-all duration-500"
-                            style={{ width: `${(getNutrientValue(prediction.nutritional_information[5]) / 50) * 100}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-xs text-gray-500">% Daily Value based on 50g recommendation</span>
-                      </div>
-                    )}
-
-                    {/* Other Nutrients Grid - with null checks */}
-                    <div className="grid grid-cols-2 gap-4">
-                      {prediction.nutritional_information && prediction.nutritional_information.length > 6 && (
-                        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Protein</span>
-                          <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[6])}g</p>
-                        </div>
-                      )}
-                      {prediction.nutritional_information && prediction.nutritional_information.length > 2 && (
-                        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Fat</span>
-                          <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[2])}g</p>
-                        </div>
-                      )}
-                      {prediction.nutritional_information && prediction.nutritional_information.length > 3 && (
-                        <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                          <span className="text-sm text-gray-600 dark:text-gray-400">Sodium</span>
-                          <p className="font-semibold">{getNutrientValue(prediction.nutritional_information[3])}mg</p>
-                        </div>
-                      )}
-                      <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Serving</span>
-                        <p className="font-semibold">355ml</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <NutritionalData nutritionalInfo={prediction.nutritional_information} />
               </div>
             )}
 
             {/* Allergens & Warnings */}
-            {((prediction.allergen_information && prediction.allergen_information.length > 0) || 
-              (prediction.cautions_and_warnings && prediction.cautions_and_warnings.length > 0)) && (
+            {(safeAccess(prediction, 'allergen_information', []).length > 0 || 
+              safeAccess(prediction, 'cautions_and_warnings', []).length > 0) && (
               <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
                 <h4 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
                   Allergens & Warnings
@@ -190,10 +139,10 @@ export default function ProductAnalysisResult({
                     ...(prediction.cautions_and_warnings || [])
                   ].map((warning, index) => (
                     <li key={index} className="flex items-center text-yellow-700 dark:text-yellow-300">
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      {warning}
+                      <span>{warning}</span>
                     </li>
                   ))}
                 </ul>
@@ -204,101 +153,31 @@ export default function ProductAnalysisResult({
           {/* Right Column */}
           <div className="space-y-6">
             {/* Environmental Impact */}
-            {prediction["enviromental pros and cons"] && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Environmental Impact
-                </h3>
-                <div className="space-y-4">
-                  {/* Pros */}
-                  {prediction["enviromental pros and cons"].positive_things_about_the_product && 
-                    prediction["enviromental pros and cons"].positive_things_about_the_product.length > 0 && (
-                    <div>
-                      <h4 className="text-green-600 dark:text-green-400 font-medium mb-2">Positives</h4>
-                      <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                        {prediction["enviromental pros and cons"].positive_things_about_the_product.map((pro, index) => (
-                          <li key={index}>{pro}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {/* Cons */}
-                  {prediction["enviromental pros and cons"].harmful_things_about_the_product && 
-                    prediction["enviromental pros and cons"].harmful_things_about_the_product.length > 0 && (
-                    <div>
-                      <h4 className="text-red-600 dark:text-red-400 font-medium mb-2">Concerns</h4>
-                      <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                        {prediction["enviromental pros and cons"].harmful_things_about_the_product.map((con, index) => (
-                          <li key={index}>{con}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {/* Environmental Alternatives */}
-                  {prediction["enviromental pros and cons"].alternatives_to_consider && 
-                    prediction["enviromental pros and cons"].alternatives_to_consider.length > 0 && (
-                    <div>
-                      <h4 className="text-blue-600 dark:text-blue-400 font-medium mb-2">Eco-Friendly Alternatives</h4>
-                      <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                        {prediction["enviromental pros and cons"].alternatives_to_consider.map((alternative, index) => (
-                          <li key={index}>{alternative}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
+            {Object.keys(environmentalData).length > 0 && (
+              <ImpactSection 
+                title="Environmental Impact"
+                data={environmentalData}
+                positiveTitle="Positives"
+                negativeTitle="Concerns"
+                alternativesTitle="Eco-Friendly Alternatives"
+                positiveColor="green"
+                negativeColor="red"
+                alternativeColor="blue"
+              />
             )}
 
             {/* Health Impact - only show if available */}
-            {prediction["health pros and cons"] && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Health Considerations
-                </h3>
-                <div className="space-y-4">
-                  {/* Pros */}
-                  {prediction["health pros and cons"].positive_things_about_the_product && 
-                    prediction["health pros and cons"].positive_things_about_the_product.length > 0 && (
-                    <div>
-                      <h4 className="text-green-600 dark:text-green-400 font-medium mb-2">Benefits</h4>
-                      <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                        {prediction["health pros and cons"].positive_things_about_the_product.map((pro, index) => (
-                          <li key={index}>{pro}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {/* Cons */}
-                  {prediction["health pros and cons"].harmful_things_about_the_product && 
-                    prediction["health pros and cons"].harmful_things_about_the_product.length > 0 && (
-                    <div>
-                      <h4 className="text-red-600 dark:text-red-400 font-medium mb-2">Risks</h4>
-                      <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                        {prediction["health pros and cons"].harmful_things_about_the_product.map((con, index) => (
-                          <li key={index}>{con}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  
-                  {/* Health Alternatives */}
-                  {prediction["health pros and cons"].alternatives_to_consider && 
-                    prediction["health pros and cons"].alternatives_to_consider.length > 0 && (
-                    <div>
-                      <h4 className="text-blue-600 dark:text-blue-400 font-medium mb-2">Healthier Alternatives</h4>
-                      <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
-                        {prediction["health pros and cons"].alternatives_to_consider.map((alternative, index) => (
-                          <li key={index}>{alternative}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </div>
+            {Object.keys(healthData).length > 0 && (
+              <ImpactSection 
+                title="Health Considerations"
+                data={healthData}
+                positiveTitle="Benefits"
+                negativeTitle="Risks"
+                alternativesTitle="Healthier Alternatives"
+                positiveColor="green"
+                negativeColor="red"
+                alternativeColor="blue"
+              />
             )}
           </div>
         </div>
@@ -309,7 +188,7 @@ export default function ProductAnalysisResult({
           className="mt-6 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 
             dark:hover:text-gray-300 underline"
         >
-          Toggle Raw Data
+          {showRawData ? 'Hide Raw Data' : 'Show Raw Data'}
         </button>
         {showRawData && (
           <pre
@@ -322,4 +201,151 @@ export default function ProductAnalysisResult({
       </div>
     </div>
   );
-} 
+};
+
+/**
+ * Extracted component for nutritional data display
+ */
+const NutritionalData = ({ nutritionalInfo }) => {
+  if (!nutritionalInfo || !nutritionalInfo.length) return null;
+  
+  return (
+    <div className="mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Calories - with null check */}
+        {nutritionalInfo.length > 1 && (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">Calories</span>
+              <span className="font-semibold">{getNutrientValue(nutritionalInfo[1])}cal</span>
+            </div>
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-orange-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((getNutrientValue(nutritionalInfo[1]) / 2000) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <span className="text-xs text-gray-500">% Daily Value based on 2000 cal diet</span>
+          </div>
+        )}
+
+        {/* Carbohydrates - with null check */}
+        {nutritionalInfo.length > 4 && (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">Carbohydrates</span>
+              <span className="font-semibold">{getNutrientValue(nutritionalInfo[4])}g</span>
+            </div>
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((getNutrientValue(nutritionalInfo[4]) / 300) * 100, 100)}%` }}
+              ></div>
+            </div>
+            <span className="text-xs text-gray-500">% Daily Value based on 300g recommendation</span>
+          </div>
+        )}
+
+        {/* Other Nutrients Grid - with null checks */}
+        <div className="grid grid-cols-2 gap-4">
+          {nutritionalInfo.length > 6 && (
+            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Protein</span>
+              <p className="font-semibold">{getNutrientValue(nutritionalInfo[6])}g</p>
+            </div>
+          )}
+          {nutritionalInfo.length > 2 && (
+            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Fat</span>
+              <p className="font-semibold">{getNutrientValue(nutritionalInfo[2])}g</p>
+            </div>
+          )}
+          {nutritionalInfo.length > 3 && (
+            <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Sodium</span>
+              <p className="font-semibold">{getNutrientValue(nutritionalInfo[3])}mg</p>
+            </div>
+          )}
+          <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <span className="text-sm text-gray-600 dark:text-gray-400">Serving</span>
+            <p className="font-semibold">355ml</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Reusable component for displaying impact data (environmental or health)
+ */
+const ImpactSection = ({ 
+  title, 
+  data, 
+  positiveTitle, 
+  negativeTitle, 
+  alternativesTitle,
+  positiveColor = "green",
+  negativeColor = "red",
+  alternativeColor = "blue"
+}) => {
+  const positives = safeAccess(data, 'positive_things_about_the_product', []);
+  const negatives = safeAccess(data, 'harmful_things_about_the_product', []);
+  const alternatives = safeAccess(data, 'alternatives_to_consider', []);
+  
+  if (!positives.length && !negatives.length && !alternatives.length) return null;
+  
+  return (
+    <div>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+        {title}
+      </h3>
+      <div className="space-y-4">
+        {/* Pros */}
+        {positives.length > 0 && (
+          <div>
+            <h4 className={`text-${positiveColor}-600 dark:text-${positiveColor}-400 font-medium mb-2`}>
+              {positiveTitle}
+            </h4>
+            <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
+              {positives.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {/* Cons */}
+        {negatives.length > 0 && (
+          <div>
+            <h4 className={`text-${negativeColor}-600 dark:text-${negativeColor}-400 font-medium mb-2`}>
+              {negativeTitle}
+            </h4>
+            <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
+              {negatives.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        
+        {/* Alternatives */}
+        {alternatives.length > 0 && (
+          <div>
+            <h4 className={`text-${alternativeColor}-600 dark:text-${alternativeColor}-400 font-medium mb-2`}>
+              {alternativesTitle}
+            </h4>
+            <ul className="list-disc list-inside text-gray-600 dark:text-gray-400 space-y-1">
+              {alternatives.map((item, index) => (
+                <li key={index}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Export as memoized component to prevent unnecessary re-renders
+export default ProductAnalysisResult; 
