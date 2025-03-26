@@ -33,3 +33,8 @@ app.add_middleware(
 # including routers
 app.include_router(report_analysis.router)
 app.include_router(eco_agent.router)
+
+# Add this block to run the server without uvloop
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, loop="asyncio")

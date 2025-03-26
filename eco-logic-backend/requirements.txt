@@ -1,13 +1,14 @@
-fastapi
-uvicorn
-python-dotenv
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-dotenv>=1.0.0
 google-generativeai
-Pillow
+Pillow>=10.0.0
 tavily-python
-Jinja2
-python-multipart
+Jinja2>=3.1.2
+python-multipart>=0.0.6
 firebase-admin
-typing-extensions
-pydantic
-uuid
-fastapi-cors
+typing-extensions>=4.8.0
+pydantic>=2.4.2
+httpx>=0.24.1
+# uuid is part of Python's standard library, no need to install
+# fastapi-cors is not needed as CORS is handled by FastAPI directly
