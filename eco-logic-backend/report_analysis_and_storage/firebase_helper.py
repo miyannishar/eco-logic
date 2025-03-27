@@ -8,7 +8,7 @@ load_dotenv()
 # Initialize Firebase with both storage bucket and database URL
 cred = credentials.Certificate("firebase_config.json")
 firebase_admin.initialize_app(cred, {
-    'storageBucket': 'gs://sustainify-91b96.firebasestorage.app',
+    'storageBucket': 'sustainify-91b96.appspot.com',
     'databaseURL': 'https://sustainify-91b96-default-rtdb.firebaseio.com/'
 })
 
@@ -35,13 +35,14 @@ def retrieve_data_by_keyword(user_id):
     
     return report_contents 
 
-def pushDataToRealtimeFBDB(user_id, report_data):
+def pushDataToRealtimeFBDB(data):
     """
     Push report data to Firebase Realtime Database under the user's ID
     """
+    user_id = data.get('user-id', 'unknown_user')
     ref = db.reference(f'/users/{user_id}/reports')
     new_report_ref = ref.push()
-    new_report_ref.set(report_data)
+    new_report_ref.set(data)
     return new_report_ref.key
 
 def getUrlsOfUser(user_id):

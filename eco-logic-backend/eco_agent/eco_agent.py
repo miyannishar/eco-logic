@@ -7,7 +7,7 @@ import json
 from wrapper import getOutPutInFormat, tavilySearch, model_pro, model, typeDocInputNOutputFormat
 from .output_structure import EdibleDataExtraction, EnviromentalProsAndCons, HealthProsAndCons
 from .prompts import product_description_template, web_searching_template, enviromental_suggestions, health_suggestions
-from report_analysis_and_storage import firebase_helper
+from report_analysis_and_storage.mongodb_helper import retrieve_data_by_keyword
 
 router = APIRouter(
     prefix="/eco-agent",
@@ -160,7 +160,7 @@ async def describeProducts(userMedicalAilments: str, file: UploadFile = File(...
                     allergen_information=product_details["allergen_information"],
                     cautions_and_warnings=product_details["cautions_and_warnings"],
                     user_medical_ailments=userMedicalAilments,
-                    user_medical_report_details='\n\n'.join(firebase_helper.retrieve_data_by_keyword('Om123'))
+                    user_medical_report_details='\n\n'.join(retrieve_data_by_keyword('Om123'))
                 ),
                 [],
                 HealthProsAndCons
