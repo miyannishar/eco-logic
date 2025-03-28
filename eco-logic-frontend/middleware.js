@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const PUBLIC_PATHS = ['/', '/login', '/signup'];
-const PROTECTED_PATHS = ['/welcome', '/food-analysis'];
+const PROTECTED_PATHS = ['/welcome', '/food-analysis', '/medical-reports'];
 
 export function middleware(request) {
     const token = request.cookies.get("token")?.value;
@@ -28,8 +28,10 @@ export const config = {
         '/signup',
         '/welcome',
         '/food-analysis/:path*',
+        '/medical-reports/:path*',
         '/guest-dashboard',
         '/api/auth/:path*',
-        '/api/food/:path*'
+        '/api/food/:path*',
+        '/report-storage/:path*'
     ]
 }; 

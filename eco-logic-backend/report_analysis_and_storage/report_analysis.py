@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, status, HTTPException, Body, File, UploadFile
 import os
 import json
+from fastapi.responses import StreamingResponse, FileResponse, RedirectResponse
+import io
 
 # Replace Firebase imports with MongoDB imports
-from .mongodb_helper import upload_file_to_mongodb, store_report_data, get_urls_of_user, retrieve_data_by_keyword
+from .mongodb_helper import upload_file_to_mongodb, store_report_data, get_urls_of_user, retrieve_data_by_keyword, BACKEND_URL
 
 from .prompts import extract_details_from_report
 
@@ -105,6 +107,12 @@ async def analyseAndUploadReport(userId: str, fileInput: UploadFile = File(...))
         document_id = store_report_data(final_data_push)
         final_data_push['_id'] = document_id
 
+        # Add download URL to the response - use absolute URL
+        final_data_push['download_url'] = f"{BACKEND_URL}/report-storage/download/{file_result['file_id']}/{unique_filename}"
+        
+        # Make sure view_url is also an absolute URL
+        final_data_push['view_url'] = file_result['url']  # This should already be absolute from the helper function
+
         # Clean up the temporary file
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -125,20 +133,53 @@ async def analyseAndUploadReport(userId: str, fileInput: UploadFile = File(...))
 
 
 @router.post('/fetch-user-reports-url')
-def fetchUrlsOfUserReportsAndTypes(usedId: str):
+@router.get('/fetch-user-reports-url')  # Adding GET support for easier testing
+def fetchUrlsOfUserReportsAndTypes(userId: str = None, user_id: str = None):
+    """
+    Get all reports for a specific user.
+    Can be called with either 'userId' or 'user_id' parameter.
+    """
     try:
-        return get_urls_of_user(usedId)
+        # Use whichever parameter is provided
+        actual_user_id = userId or user_id
+        
+        if not actual_user_id:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, 
+                               detail="User ID is required. Provide either 'userId' or 'user_id' parameter.")
+        
+        print(f"Fetching reports for user ID: {actual_user_id}")
+        reports = get_urls_of_user(actual_user_id)
+        
+        # Add a message if no reports are found
+        if not reports:
+            return {
+                "message": f"No reports found for user ID: {actual_user_id}",
+                "reports": []
+            }
+        
+        # Verify all URLs are absolute
+        for report in reports:
+            # Ensure URL is absolute (should already be handled in mongodb_helper)
+            if 'url' in report and not report['url'].startswith('http'):
+                report['url'] = f"{BACKEND_URL}{report['url']}"
+            if 'download_url' in report and not report['download_url'].startswith('http'):
+                report['download_url'] = f"{BACKEND_URL}{report['download_url']}"
+            
+        return {
+            "message": f"Found {len(reports)} reports",
+            "reports": reports
+        }
     except Exception as e:
         print(f"Error fetching user reports: {str(e)}")
-        raise HTTPException(status.HTTP_404_NOT_FOUND, f"User not Found: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Error retrieving user reports: {str(e)}")
 
 
 # New endpoint to serve files from MongoDB GridFS
 @router.get('/files/{file_id}')
 def get_file_endpoint(file_id: str):
     from .mongodb_helper import get_file
-    from fastapi.responses import StreamingResponse
-    import io
     
     file = get_file(file_id)
     if not file:
@@ -148,9 +189,58 @@ def get_file_endpoint(file_id: str):
     content_type = file.content_type
     file_data = file.read()
     
+    # Set headers to allow cross-origin access
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Content-Disposition": "inline"
+    }
+    
     return StreamingResponse(
         io.BytesIO(file_data),
-        media_type=content_type
+        media_type=content_type,
+        headers=headers
+    )
+
+# New dedicated download endpoint with filename
+@router.get('/download/{file_id}/{filename}')
+def download_file(file_id: str, filename: str):
+    """
+    Download a file with a proper filename, making it more user-friendly.
+    This endpoint serves the file as an attachment with the specified filename.
+    """
+    from .mongodb_helper import get_file
+    
+    file = get_file(file_id)
+    if not file:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "File not found")
+    
+    # Read the file data
+    file_data = file.read()
+    content_type = file.content_type
+    
+    # Create a temporary file to serve as a download
+    temp_path = os.path.join('media', 'reports', 'temp_downloads', filename)
+    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+    
+    with open(temp_path, 'wb') as f:
+        f.write(file_data)
+    
+    # Set headers to allow cross-origin access
+    headers = {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Content-Disposition": f"attachment; filename={filename}"
+    }
+    
+    # Serve the file as an attachment with the specified filename
+    return FileResponse(
+        path=temp_path,
+        filename=filename,
+        media_type=content_type,
+        headers=headers
     )
 
 
