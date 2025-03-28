@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import FormError from './FormError';
 
 export default function ImageCapture() {
   const videoRef = useRef(null);
@@ -15,17 +16,19 @@ export default function ImageCapture() {
   useEffect(() => {
     startCamera();
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopStream();
     };
   }, [facingMode]);
 
+  const stopStream = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
   const startCamera = async () => {
     try {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopStream();
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode }
@@ -82,6 +85,17 @@ export default function ImageCapture() {
     }
   };
 
+  const CameraButton = ({ onClick, isCapture = false, disabled = false, children }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`p-${isCapture ? '4' : '3'} bg-white/20 rounded-full backdrop-blur-sm`}
+      title={isCapture ? "Capture Image" : "Switch Camera"}
+    >
+      {children}
+    </button>
+  );
+
   return (
     <div className="space-y-4">
       <div className="relative rounded-lg overflow-hidden bg-black aspect-[4/3]">
@@ -102,34 +116,22 @@ export default function ImageCapture() {
 
         {/* Controls overlay */}
         <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-4">
-          <button
-            onClick={switchCamera}
-            className="p-3 bg-white/20 rounded-full backdrop-blur-sm"
-            title="Switch Camera"
-          >
+          <CameraButton onClick={switchCamera}>
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-          </button>
+          </CameraButton>
           
-          <button
-            onClick={captureImage}
-            disabled={isCapturing}
-            className="p-4 bg-white/20 rounded-full backdrop-blur-sm"
-          >
+          <CameraButton onClick={captureImage} disabled={isCapturing} isCapture>
             <div className={`w-12 h-12 rounded-full ${
               isCapturing ? 'bg-red-500' : 'bg-white'
             } transition-colors duration-200`}></div>
-          </button>
+          </CameraButton>
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-          {error}
-        </div>
-      )}
+      <FormError message={error} />
 
       <div className="text-center text-sm text-gray-500">
         Center the building in the frame and tap the capture button

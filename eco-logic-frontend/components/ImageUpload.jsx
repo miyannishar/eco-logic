@@ -3,6 +3,8 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Button from './Button';
+import FormError from './FormError';
 
 export default function ImageUpload() {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -12,22 +14,34 @@ export default function ImageUpload() {
   const fileInputRef = useRef(null);
   const router = useRouter();
 
-  const handleImageSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
-        setError("Image size should be less than 10MB");
-        return;
-      }
+  const validateImage = (file) => {
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      setError("Image size should be less than 10MB");
+      return false;
+    }
 
-      if (!file.type.startsWith('image/')) {
-        setError("Please select an image file");
-        return;
-      }
+    if (!file.type.startsWith('image/')) {
+      setError("Please select an image file");
+      return false;
+    }
 
+    return true;
+  };
+
+  const processSelectedImage = (file) => {
+    if (validateImage(file)) {
       setSelectedImage(file);
       setPreview(URL.createObjectURL(file));
       setError(null);
+      return true;
+    }
+    return false;
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      processSelectedImage(file);
     }
   };
 
@@ -35,13 +49,7 @@ export default function ImageUpload() {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
-        setSelectedImage(file);
-        setPreview(URL.createObjectURL(file));
-        setError(null);
-      } else {
-        setError("Please drop an image file");
-      }
+      processSelectedImage(file);
     }
   };
 
@@ -122,23 +130,16 @@ export default function ImageUpload() {
         )}
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
-          {error}
-        </div>
-      )}
+      <FormError message={error} />
 
-      <button
+      <Button
         onClick={handleSubmit}
         disabled={!selectedImage || loading}
-        className={`w-full py-3 px-4 rounded-md text-white font-medium
-                   ${loading || !selectedImage
-                     ? 'bg-gray-400 cursor-not-allowed'
-                     : 'bg-blue-500 hover:bg-blue-600'
-                   }`}
+        fullWidth
+        variant={!selectedImage || loading ? "outline" : "primary"}
       >
         {loading ? 'Processing...' : 'Analyze Image'}
-      </button>
+      </Button>
     </div>
   );
 } 

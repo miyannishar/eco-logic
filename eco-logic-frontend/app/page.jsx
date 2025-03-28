@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import LoginForm from '../components/LoginForm';
 import SignupForm from '../components/SignupForm';
-import Image from 'next/image';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
 
 export default function Home() {
   const [showLoginForm, setShowLoginForm] = useState(false);
@@ -83,43 +85,58 @@ export default function Home() {
 
         {/* Call to Action Buttons */}
         <div className="space-x-4">
-          <button
+          <Button
             onClick={() => setShowLoginForm(true)}
-            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            variant="primary"
           >
             Login
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setShowSignupForm(true)}
-            className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            variant="secondary"
           >
             Sign Up
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => router.push('/guest-dashboard')}
-            className="px-8 py-3 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors backdrop-blur-sm font-medium"
+            variant="outline"
           >
             Continue as Guest
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Modal Forms */}
-      {showLoginForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <LoginForm onSuccess={handleLoginSuccess} onClose={() => setShowLoginForm(false)} />
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={showLoginForm} 
+        onClose={() => setShowLoginForm(false)}
+        title="Welcome Back!"
+        subtitle="Sign in to continue"
+      >
+        <LoginForm 
+          onSuccess={handleLoginSuccess} 
+          onClose={() => setShowLoginForm(false)} 
+          onSwitchToSignup={() => {
+            setShowLoginForm(false);
+            setShowSignupForm(true);
+          }}
+        />
+      </Modal>
 
-      {showSignupForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <SignupForm onSuccess={handleSignupSuccess} onClose={() => setShowSignupForm(false)} />
-          </div>
-        </div>
-      )}
+      <Modal 
+        isOpen={showSignupForm} 
+        onClose={() => setShowSignupForm(false)}
+        title="Create Account"
+        subtitle="Join ECo-nnect today"
+      >
+        <SignupForm 
+          onSuccess={handleSignupSuccess} 
+          onClose={() => setShowSignupForm(false)}
+          onSwitchToLogin={() => {
+            setShowSignupForm(false);
+            setShowLoginForm(true);
+          }}
+        />
+      </Modal>
     </div>
   );
 }
