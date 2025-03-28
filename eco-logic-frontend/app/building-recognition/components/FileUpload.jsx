@@ -147,18 +147,16 @@ export default function FileUpload({
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
+      
+      // Add medical ailments as form data instead of query param
+      if (selectedDisease && selectedDisease !== 'none') {
+        formData.append('userMedicalAilments', selectedDisease);
+      }
 
-      const apiEndpoint = `http://localhost:8000/eco-agent/product-details?userMedicalAilments=${selectedDisease}`;
-      console.log('Sending request to API:', apiEndpoint);
-
-      const response = await fetch(apiEndpoint, {
+      // Use our internal API endpoint which will handle user authentication
+      const response = await fetch('/api/eco-agent/product-details', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Accept': 'application/json',
-        },
-        mode: 'cors',
-        credentials: 'include',
       });
 
       console.log('Response received:', response.status);

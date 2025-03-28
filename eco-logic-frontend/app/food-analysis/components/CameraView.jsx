@@ -222,19 +222,17 @@ export default function CameraView({
           const formData = new FormData();
           formData.append('file', videoFile);
           
+          // Add medical ailments as form data instead of query param
+          if (selectedDisease && selectedDisease !== 'none') {
+            formData.append('userMedicalAilments', selectedDisease);
+          }
+          
           setIsLoading(true);
-          const response = await fetch(
-            `http://localhost:8000/eco-agent/product-details?userMedicalAilments=${selectedDisease}`,
-            {
-              method: 'POST',
-              body: formData,
-              headers: {
-                'Accept': 'application/json',
-              },
-              mode: 'cors',
-              credentials: 'include',
-            }
-          );
+          // Use our internal API endpoint which will handle user authentication
+          const response = await fetch('/api/eco-agent/product-details', {
+            method: 'POST',
+            body: formData,
+          });
 
           if (!response.ok) {
             const errorText = await response.text();

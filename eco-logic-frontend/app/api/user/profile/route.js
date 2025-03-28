@@ -16,7 +16,7 @@ export async function GET(req) {
     }
 
     // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
 
     await connectMongoDB();
 

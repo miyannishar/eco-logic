@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, status, HTTPException, Body, UploadFile, File
+from fastapi import APIRouter, Depends, status, HTTPException, Body, UploadFile, File, Form, Query
 from fastapi.responses import JSONResponse
-from typing import List
+from typing import List, Optional
 import os
 import json
 
@@ -19,11 +19,20 @@ def testRouter():
     return {"Prenatal - API Router Test": "Works like a Charm!!!"}
 
 @router.post('/product-details')
-async def describeProducts(userMedicalAilments: str, file: UploadFile = File(...)):
+async def describeProducts(
+    file: UploadFile = File(...),
+    userMedicalAilments: str = Form(None),
+    userId: Optional[str] = Form(None)
+):
     try:
+        # Default userId if not provided
+        if not userId:
+            userId = "default_user"
+            
         print("\n=== Starting Product Description Process ===")
         print(f"Received file: {file.filename}")
-        print(f"User medical ailments: {userMedicalAilments}")
+        print(f"User ID: {userId}")
+        print(f"User medical ailments: {userMedicalAilments or 'None provided'}")
         
         # Save the uploaded file
         file_content = await file.read()
@@ -150,6 +159,15 @@ async def describeProducts(userMedicalAilments: str, file: UploadFile = File(...
             )
             print("Environmental analysis response:", pros_and_cons_enviromental)
 
+            # Retrieve user health data
+            try:
+                print(f"\n--- Getting health data for user: {userId} ---")
+                user_health_data = retrieve_data_by_keyword(userId)
+                print(f"Found {len(user_health_data)} health data items for user")
+            except Exception as e:
+                print(f"Error retrieving health data: {str(e)}")
+                user_health_data = []
+
             # Generate health analysis
             pros_and_cons_health = getOutPutInFormat(
                 model,
@@ -159,8 +177,8 @@ async def describeProducts(userMedicalAilments: str, file: UploadFile = File(...
                     ingridients_used=product_details["ingridients_used"],
                     allergen_information=product_details["allergen_information"],
                     cautions_and_warnings=product_details["cautions_and_warnings"],
-                    user_medical_ailments=userMedicalAilments,
-                    user_medical_report_details='\n\n'.join(retrieve_data_by_keyword('Om123'))
+                    user_medical_ailments=userMedicalAilments or "",
+                    user_medical_report_details='\n\n'.join(user_health_data)
                 ),
                 [],
                 HealthProsAndCons
