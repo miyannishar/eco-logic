@@ -2,7 +2,7 @@ import "./globals.css";
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 export const metadata = {
-  title: 'ECo-nnect',
+  title: 'ECo-logic',
   description: 'AI-powered food analysis and eco-friendly alternatives',
 };
 

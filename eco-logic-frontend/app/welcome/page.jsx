@@ -94,7 +94,7 @@ export default function WelcomePage() {
             <div className="flex items-center">
               <Image
                 src="/images/econnect.jpeg"
-                alt="ECo-nnect Logo"
+                alt="ECo-logic Logo"
                 width={100}
                 height={40}
                 className="object-contain h-10 w-auto"

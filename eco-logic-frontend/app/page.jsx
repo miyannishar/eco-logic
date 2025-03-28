@@ -46,14 +46,14 @@ export default function Home() {
           <div className="mb-6">
             <Image
               src="/images/Logo.jpeg"
-              alt="ECo-nnect Logo"
+              alt="ECo-logic Logo"
               width={200}
               height={200}
               className="mx-auto"
             />
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white animate-fade-in">
-            Welcome to ECo-nnect
+            Welcome to ECo-logic
           </h1>
           <p className="text-xl md:text-2xl text-gray-200 animate-fade-in-delay">
           Empowering simple, impactful eco-friendly choices for a sustainable future.
@@ -126,7 +126,7 @@ export default function Home() {
         isOpen={showSignupForm} 
         onClose={() => setShowSignupForm(false)}
         title="Create Account"
-        subtitle="Join ECo-nnect today"
+        subtitle="Join ECo-logic today"
       >
         <SignupForm 
           onSuccess={handleSignupSuccess} 
