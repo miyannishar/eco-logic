@@ -79,77 +79,9 @@ input {
   @apply border-blue-500;
 }
 
-/* Map components */
-.selected-marker {
-  transform: scale(1.1);
-  border: 2px solid #3b82f6;
-  transition: all 0.2s ease-in-out;
-}
-
-.marker-academic {
-  background-color: #3b82f6;
-  color: white;
-}
-
-.marker-administrative {
-  background-color: #ef4444;
-  color: white;
-}
-
-.marker-library {
-  background-color: #10b981;
-  color: white;
-}
-
-.current-location-marker {
-  @apply bg-blue-500 text-white px-2 py-1 rounded-full shadow-lg;
-}
-
-.map-info-window {
-  padding: 1rem;
-  max-width: 300px;
-}
-
-.map-info-window h3 {
-  font-size: 1.25rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.map-info-window p {
-  color: #4b5563;
-  margin-bottom: 0.5rem;
-}
-
-.map-info-window a {
-  color: #2563eb;
-  text-decoration: underline;
-}
-
-.directions-panel {
-  @apply bg-white rounded-lg shadow-lg p-4 mt-4;
-}
-
-.directions-step {
-  @apply py-2 border-b last:border-b-0;
-}
-
-.search-result {
-  @apply hover:bg-gray-100 cursor-pointer transition-colors duration-200;
-}
-
 /* UI components */
 .building-card {
   @apply transition-transform duration-200 hover:scale-105;
-}
-
-.nav-icon-active {
-  @apply relative;
-}
-
-.nav-icon-active::after {
-  content: '';
-  @apply absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full;
 }
 
 .result-container {

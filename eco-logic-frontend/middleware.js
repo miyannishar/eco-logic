@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-const PUBLIC_PATHS = ['/', '/login', '/signup', '/privacy', '/terms', '/contact'];
-const PROTECTED_PATHS = ['/welcome', '/dashboard', '/map', '/camera'];
+const PUBLIC_PATHS = ['/', '/login', '/signup'];
+const PROTECTED_PATHS = ['/welcome', '/food-analysis'];
 
 export function middleware(request) {
     const token = request.cookies.get("token")?.value;
@@ -27,9 +27,9 @@ export const config = {
         '/login',
         '/signup',
         '/welcome',
-        '/dashboard/:path*',
-        '/map/:path*',
-        '/camera/:path*',
-        '/api/user/:path*'
+        '/food-analysis/:path*',
+        '/guest-dashboard',
+        '/api/auth/:path*',
+        '/api/food/:path*'
     ]
 }; 
