@@ -166,13 +166,18 @@ def getOutPutInFormat(model: genai.GenerativeModel, query: str, image_names: Lis
         return False
 
 
-def typeDocInputNOutputFormat(model: genai.GenerativeModel, query: str, output_type, report_path: str = "media/reports/temp.pdf"):
+def typeDocInputNOutputFormat(model: genai.GenerativeModel, query: str, output_type, report_path: str):
     print(f"\n=== typeDocInputNOutputFormat ===")
     print(f"Processing file: {report_path}")
     print(f"Output type: {output_type}")
     print(f"Query: {query}")
     
     try:
+        # Check if file exists
+        if not os.path.exists(report_path):
+            print(f"Error: File not found at {report_path}")
+            return {"error": f"File not found at {report_path}"}
+            
         video_file = genai.upload_file(path=report_path)
         print("File uploaded successfully")
 
@@ -186,7 +191,7 @@ def typeDocInputNOutputFormat(model: genai.GenerativeModel, query: str, output_t
 
         if video_file.state.name == "FAILED":
             print("File processing failed")
-            return False
+            return {"error": "File processing failed"}
 
         print("Generating content with model")
         response = model.generate_content(
@@ -205,7 +210,7 @@ def typeDocInputNOutputFormat(model: genai.GenerativeModel, query: str, output_t
         print(f"Error type: {type(e)}")
         import traceback
         print(f"Traceback: {traceback.format_exc()}")
-        return False
+        return {"error": str(e)}
 
 
 '''

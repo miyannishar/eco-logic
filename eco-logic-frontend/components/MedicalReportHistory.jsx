@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Button from './Button';
 import FormError from './FormError';
+import config from "@/app/config";
 
 export default function MedicalReportHistory({ userId }) {
   const [reports, setReports] = useState([]);
@@ -18,7 +19,7 @@ export default function MedicalReportHistory({ userId }) {
       setError(null);
       
       try {
-        const response = await fetch(`http://localhost:8000/report-storage/fetch-user-reports-url?userId=${userId}`, {
+        const response = await fetch(`${config.apiBaseUrl}/report-storage/fetch-user-reports-url?userId=${userId}`, {
           method: 'POST',
           credentials: 'include',
           headers: {

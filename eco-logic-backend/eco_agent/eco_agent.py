@@ -3,11 +3,12 @@ from fastapi.responses import JSONResponse
 from typing import List, Optional
 import os
 import json
+import tempfile
 
 from wrapper import getOutPutInFormat, tavilySearch, model_pro, model, typeDocInputNOutputFormat
 from .output_structure import EdibleDataExtraction, EnviromentalProsAndCons, HealthProsAndCons
 from .prompts import product_description_template, web_searching_template, enviromental_suggestions, health_suggestions
-from report_analysis_and_storage.mongodb_helper import retrieve_data_by_keyword
+from report_analysis_and_storage.mongodb_helper import retrieve_data_by_keyword, upload_file_to_mongodb
 
 router = APIRouter(
     prefix="/eco-agent",
@@ -34,21 +35,33 @@ async def describeProducts(
         print(f"User ID: {userId}")
         print(f"User medical ailments: {userMedicalAilments or 'None provided'}")
         
-        # Save the uploaded file
+        # Save the uploaded file using MongoDB GridFS instead of local filesystem
         file_content = await file.read()
-        video_path = os.path.join('media', 'videos', file.filename)
-        with open(video_path, 'wb') as buffer:
-            buffer.write(file_content)
-        print(f"Saved file to: {video_path}")
+        
+        # Create a temporary file for processing
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as temp_file:
+            temp_file.write(file_content)
+            temp_path = temp_file.name
+            
+        print(f"Created temporary file at: {temp_path}")
+        
+        # Store the file in MongoDB GridFS for persistence
+        file_info = upload_file_to_mongodb(
+            file_content,
+            file.content_type,
+            file.filename,
+            {"userId": userId}
+        )
+        print(f"File stored in MongoDB with ID: {file_info['file_id']}")
 
         try:
             print("\n--- Getting initial product details from image ---")
-            # Get initial product details from image
+            # Get initial product details from image using the temporary file
             product_details = typeDocInputNOutputFormat(
                 model, 
                 product_description_template, 
                 EdibleDataExtraction, 
-                video_path
+                temp_path
             )
             print(f"Raw product details response: {product_details}")
 
@@ -220,5 +233,6 @@ async def describeProducts(
         )
     finally:
         # Clean up the temporary file
-        if os.path.exists(video_path):
-            os.remove(video_path) 
+        if 'temp_path' in locals() and os.path.exists(temp_path):
+            os.remove(temp_path)
+            print(f"Temporary file removed: {temp_path}") 

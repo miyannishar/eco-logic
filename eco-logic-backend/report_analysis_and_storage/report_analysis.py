@@ -3,6 +3,10 @@ import os
 import json
 from fastapi.responses import StreamingResponse, FileResponse, RedirectResponse
 import io
+import tempfile
+from typing import Optional
+from fastapi import Query
+from starlette.background import BackgroundTask
 
 # Replace Firebase imports with MongoDB imports
 from .mongodb_helper import upload_file_to_mongodb, store_report_data, get_urls_of_user, retrieve_data_by_keyword, BACKEND_URL
@@ -28,19 +32,21 @@ def testRouter():
 
 @router.post('/analyse-and-upload')
 async def analyseAndUploadReport(userId: str, fileInput: UploadFile = File(...)):
+    """Analyze and upload a medical report"""
     file_path = None
     try:
-        # process inputs
+        # Make sure we have a valid user ID
+        if not userId:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="User ID is required")
         user_id = userId
+        
+        # Read the file
         file_binary_content = await fileInput.read()
         file_type = fileInput.content_type
+        file_size = len(file_binary_content)
         
-        # Check if file has an extension
-        if '.' in fileInput.filename:
-            _, file_extension = fileInput.filename.split('.')
-        else:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, 
-                               detail=f"File must have an extension. Supported formats: pdf, jpg, png, jpeg.")
+        # Determine file extension
+        file_extension = fileInput.filename.split('.')[-1] if '.' in fileInput.filename else ''
         
         # Check if file type is supported by Gemini
         supported_formats = ['pdf', 'jpg', 'jpeg', 'png']
@@ -48,22 +54,20 @@ async def analyseAndUploadReport(userId: str, fileInput: UploadFile = File(...))
             raise HTTPException(status.HTTP_400_BAD_REQUEST, 
                                detail=f"File format .{file_extension} is not supported. Supported formats: {', '.join(supported_formats)}")
 
-        # store the file temp to give gemini input
-        file_path = os.path.join('media', 'reports', f'temp.{file_extension}')
+        # Create a temporary file for Gemini
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_extension}") as temp_file:
+            temp_file.write(file_binary_content)
+            file_path = temp_file.name
+            
+        print(f"Created temporary file at: {file_path}")
 
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        with open(file_path, 'wb') as jammer:
-            jammer.write(file_binary_content)
-
-        # load to gemini storage for generation and get response about the pdf and type
+        # Load to Gemini storage for generation and get response
         response = typeDocInputNOutputFormat(model, extract_details_from_report, ReportContent, file_path)
         
-        # Check if response is valid (not False or None)
-        if not response or isinstance(response, bool):
+        # Check if response is valid
+        if isinstance(response, dict) and "error" in response:
             raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, 
-                               detail="Failed to analyze the document. The AI model could not process this file.")
+                               detail=f"Failed to analyze the document: {response['error']}")
         
         # Parse the response if it's a string (JSON)
         if isinstance(response, str):
@@ -81,17 +85,16 @@ async def analyseAndUploadReport(userId: str, fileInput: UploadFile = File(...))
         # Generate a unique filename for MongoDB
         unique_filename = f"{userId}_{report_categorized_type}_{generate_unique_code()}.{file_extension}"
 
-        # Upload file to MongoDB GridFS instead of Firebase Storage
-        with open(file_path, 'rb') as jammer:
-            file_result = upload_file_to_mongodb(
-                jammer.read(),
-                file_type,
-                unique_filename,
-                metadata={
-                    'user_id': user_id,
-                    'report_type': report_categorized_type
-                }
-            )
+        # Upload file to MongoDB GridFS
+        file_result = upload_file_to_mongodb(
+            file_binary_content,
+            file_type,
+            unique_filename,
+            metadata={
+                'user_id': user_id,
+                'report_type': report_categorized_type
+            }
+        )
 
         # Create a data structure for MongoDB
         final_data_push = {
@@ -114,8 +117,9 @@ async def analyseAndUploadReport(userId: str, fileInput: UploadFile = File(...))
         final_data_push['view_url'] = file_result['url']  # This should already be absolute from the helper function
 
         # Clean up the temporary file
-        if os.path.exists(file_path):
+        if file_path and os.path.exists(file_path):
             os.remove(file_path)
+            print(f"Temporary file removed: {file_path}")
 
         # Return the response
         return final_data_push
@@ -124,6 +128,7 @@ async def analyseAndUploadReport(userId: str, fileInput: UploadFile = File(...))
         # Clean up the temporary file if it exists
         if file_path and os.path.exists(file_path):
             os.remove(file_path)
+            print(f"Temporary file removed after error: {file_path}")
             
         # Re-enable exception handling
         import traceback
@@ -221,11 +226,11 @@ def download_file(file_id: str, filename: str):
     content_type = file.content_type
     
     # Create a temporary file to serve as a download
-    temp_path = os.path.join('media', 'reports', 'temp_downloads', filename)
-    os.makedirs(os.path.dirname(temp_path), exist_ok=True)
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(filename)[1]) as temp_file:
+        temp_file.write(file_data)
+        temp_path = temp_file.name
     
-    with open(temp_path, 'wb') as f:
-        f.write(file_data)
+    print(f"Created temporary download file at: {temp_path}")
     
     # Set headers to allow cross-origin access
     headers = {
@@ -235,12 +240,13 @@ def download_file(file_id: str, filename: str):
         "Content-Disposition": f"attachment; filename={filename}"
     }
     
-    # Serve the file as an attachment with the specified filename
+    # Use FileResponse with cleanup callback
     return FileResponse(
         path=temp_path,
         filename=filename,
         media_type=content_type,
-        headers=headers
+        headers=headers,
+        background=BackgroundTask(lambda: os.remove(temp_path) if os.path.exists(temp_path) else None)
     )
 
 

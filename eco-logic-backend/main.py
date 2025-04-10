@@ -1,5 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import os
+
+# Create required directories for file operations
+os.makedirs('media/videos', exist_ok=True)
+os.makedirs('media/reports', exist_ok=True)
+os.makedirs('media/reports/temp_downloads', exist_ok=True)
 
 # router
 from report_analysis_and_storage import report_analysis
@@ -16,13 +22,16 @@ origins = [
     "http://127.0.0.1:8000",
     "http://10.0.0.201",
     "http://localhost",
-    "http://10.0.0.201:3000"
+    "http://10.0.0.201:3000",
+    # Add your frontend URL when deployed
+    "https://eco-logic-frontend.onrender.com",
+    "https://eco-logic-frontend.vercel.app"
 ]
 
 # Configure CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=origins,  # Use specific origins instead of ["*"]
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers

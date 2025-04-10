@@ -2,6 +2,8 @@ import { connectMongoDB } from "@/lib/mongodb";
 import AnalysisResult from "@/models/analysisResult";
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
+import config from "@/app/config";
 
 export async function POST(req) {
   try {
@@ -28,7 +30,7 @@ export async function POST(req) {
     const pythonFormData = new FormData();
     pythonFormData.append('file', image);
 
-    const response = await fetch('http://localhost:8000/analyze', {
+    const response = await fetch(`${config.apiBaseUrl}/analyze`, {
       method: 'POST',
       body: pythonFormData,
     });

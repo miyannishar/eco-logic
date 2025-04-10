@@ -1,4 +1,16 @@
-__pycache__
-firebase_config.json
+# Environment
 .env
-venv
+venv/
+__pycache__/
+
+# Media files - keep the directories but not the content
+media/*
+!media/.gitkeep
+
+# Temporary files
+temp/
+*.tmp
+temp_*
+tmp_*
+
+firebase_config.json

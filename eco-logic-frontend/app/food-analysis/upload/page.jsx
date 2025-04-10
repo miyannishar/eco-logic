@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { CloudArrowUpIcon, XMarkIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
+import config from '../../config';
 
 export default function UploadPage() {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -49,7 +50,7 @@ export default function UploadPage() {
 
       console.log('Sending request to API...');
 
-      const response = await fetch('http://localhost:8000/predict', {
+      const response = await fetch(`${config.apiBaseUrl}/predict`, {
         method: 'POST',
         body: formData,
       });

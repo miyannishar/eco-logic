@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Button from './Button';
 import FormError from './FormError';
 import Image from 'next/image';
+import config from "@/app/config";
 
 const ALLOWED_FILE_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -88,7 +89,7 @@ export default function MedicalReportUpload({ userId }) {
       const formData = new FormData();
       formData.append("fileInput", selectedFile);
 
-      const response = await fetch(`http://localhost:8000/report-storage/analyse-and-upload?userId=${userId}`, {
+      const response = await fetch(`${config.apiBaseUrl}/report-storage/analyse-and-upload?userId=${userId}`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
