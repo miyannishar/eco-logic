@@ -1,42 +1,14 @@
+import { connectMongoDB } from "@/lib/mongodb";
+import User from "@/models/user";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
-
-// Dynamically import the connection function
-const mongodb = require('../../../../lib/mongodb');
-const connectMongoDB = mongodb.connectMongoDB;
-
-// Define User model directly to avoid import issues
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-}, { timestamps: true });
-
-// Use a function to get the model to prevent "model already defined" errors
-function getUserModel() {
-  return mongoose.models.User || mongoose.model('User', userSchema);
-}
 
 export async function POST(req) {
   try {
     const { email, password } = await req.json();
 
     await connectMongoDB();
-    
-    // Get the User model
-    const User = getUserModel();
 
     // Find user
     const user = await User.findOne({ email });
