@@ -1,9 +1,28 @@
-import { connectMongoDB } from "../../../lib/mongodb.js";
-import AnalysisResult from "../../../models/analysisResult.js";
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 import config from "@/app/config";
+
+// Import in a way that should work in both dev and production
+import mongoose from 'mongoose';
+
+// Dynamically import the connection function
+const mongodb = require('../../../lib/mongodb');
+const connectMongoDB = mongodb.connectMongoDB;
+
+// Create Analysis Result model directly here to avoid import issues
+const analysisResultSchema = new mongoose.Schema({
+  userId: { type: String, required: true },
+  predictions: { type: Object, required: false },
+  navigation: { type: Object, required: false },
+  imagePath: { type: String, required: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Use a function to get the model to prevent "model already defined" errors
+function getAnalysisResultModel() {
+  return mongoose.models.AnalysisResult || mongoose.model('AnalysisResult', analysisResultSchema);
+}
 
 export async function POST(req) {
   try {
@@ -44,11 +63,11 @@ export async function POST(req) {
     // Store result in MongoDB
     await connectMongoDB();
     
+    const AnalysisResult = getAnalysisResultModel();
     const analysisResult = await AnalysisResult.create({
       userId: session.user.id,
       predictions: result.predictions,
       navigation: result.navigation,
-      // You might want to store the image path if you're saving images
       imagePath: `uploads/${image.name}` 
     });
 
