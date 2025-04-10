@@ -1,5 +1,5 @@
-import { connectMongoDB } from "@/lib/mongodb";
-import AnalysisResult from "@/models/analysisResult";
+import { connectMongoDB } from "../../../lib/mongodb.js";
+import AnalysisResult from "../../../models/analysisResult.js";
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";

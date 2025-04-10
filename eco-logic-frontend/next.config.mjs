@@ -13,6 +13,14 @@ const nextConfig = {
     optimizeCss: true,
     scrollRestoration: true,
   },
+  webpack: (config, { isServer }) => {
+    // This additional rule ensures path aliases work correctly
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': '.',
+    };
+    return config;
+  },
   pageExtensions: ['jsx', 'js'],
   headers: async () => [
     {
