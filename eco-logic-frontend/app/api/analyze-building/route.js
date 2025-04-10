@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
-import { connectMongoDB } from "@/lib/mongodb";
-import Analysis from "@/models/analysis";
+import mongoose from "mongoose";
+
+// Dynamically import MongoDB connection
+const mongodb = require('../../../lib/mongodb');
+const connectMongoDB = mongodb.connectMongoDB;
+
+// Define Analysis model directly to avoid import issues
+const analysisSchema = new mongoose.Schema({
+  userId: { type: String },
+  result: { type: Object, required: true },
+  timestamp: { type: Date, default: Date.now }
+});
+
+// Use a function to get the model to prevent "model already defined" errors
+function getAnalysisModel() {
+  return mongoose.models.Analysis || mongoose.model('Analysis', analysisSchema);
+}
 
 export async function POST(req) {
   try {
@@ -44,6 +59,7 @@ export async function POST(req) {
 
     // Store analysis in MongoDB
     await connectMongoDB();
+    const Analysis = getAnalysisModel();
     const analysis = await Analysis.create({
       userId: req.user?.id, // If you have user authentication
       result: mockResult,
