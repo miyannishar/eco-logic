@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: eco-logic
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: BACKEND_URL
+        value: https://eco-logic.onrender.com
+    autoDeploy: true
+    
