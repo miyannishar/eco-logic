@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { connectMongoDB, getUserModel } from '@/lib/db';
+import { connectMongoDB, getUserModel } from '../../lib/db';
 
 export default function LibTestPage() {
   const [status, setStatus] = useState("Testing...");

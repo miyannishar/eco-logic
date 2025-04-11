@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
-import config from "@/app/config";
-import { connectMongoDB, getAnalysisResultModel } from "@/lib/db";
+import config from "../../../app/config";
+import { connectMongoDB, getAnalysisResultModel } from "../../../lib/db";
 
 export async function POST(req) {
   try {

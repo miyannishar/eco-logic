@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectMongoDB, getAnalysisModel } from "@/lib/db";
+import { connectMongoDB, getAnalysisModel } from "../../../lib/db";
 
 export async function POST(req) {
   try {

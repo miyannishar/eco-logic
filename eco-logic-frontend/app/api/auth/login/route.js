@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import jwt from 'jsonwebtoken';
-import { connectMongoDB, getUserModel } from "@/lib/db";
+import { connectMongoDB, getUserModel } from "../../../../lib/db";
 
 export async function POST(req) {
   try {
