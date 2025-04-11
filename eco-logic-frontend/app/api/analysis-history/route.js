@@ -1,24 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
-import mongoose from "mongoose";
-
-// Dynamically import MongoDB connection
-const mongodb = require('../../../lib/mongodb');
-const connectMongoDB = mongodb.connectMongoDB;
-
-// Create Analysis Result model directly here to avoid import issues
-const analysisResultSchema = new mongoose.Schema({
-  userId: { type: String, required: true },
-  predictions: { type: Object, required: false },
-  navigation: { type: Object, required: false },
-  imagePath: { type: String, required: false },
-  createdAt: { type: Date, default: Date.now }
-});
-
-// Use a function to get the model to prevent "model already defined" errors
-function getAnalysisResultModel() {
-  return mongoose.models.AnalysisResult || mongoose.model('AnalysisResult', analysisResultSchema);
-}
+import { connectMongoDB, getAnalysisResultModel } from "@/lib/db";
 
 export async function GET(req) {
     try {
